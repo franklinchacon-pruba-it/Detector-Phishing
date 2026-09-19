@@ -1,0 +1,38 @@
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+ 
+<input type="file" id="imagen-entrada" accept="image/*">
+<canvas id="lienzo" width="224" height="224" style="display:none"></canvas>
+<div id="resultado"></div>
+ 
+<script>
+  const URL_MODELO = "https://teachablemachine.withgoogle.com/models/KMuZhdm1q/";
+  let modelo;
+ 
+  async function cargarModelo() {
+    modelo = await tmImage.load(URL_MODELO + "model.json", URL_MODELO + "metadata.json");
+  }
+ 
+  async function clasificarImagen(archivo) {
+    const imagen = new Image();
+    imagen.src = URL.createObjectURL(archivo);
+    await imagen.decode();
+    const lienzo = document.getElementById("lienzo");
+    lienzo.getContext("2d").drawImage(imagen, 0, 0, 224, 224);
+    const predicciones = await modelo.predict(lienzo);
+    mostrarResultado(predicciones);
+  }
+ 
+  function mostrarResultado(predicciones) {
+    const mejor = predicciones.reduce((a, b) => (a.probability > b.probability ? a : b));
+    document.getElementById("resultado").innerText =
+      `${mejor.className} — ${(mejor.probability * 100).toFixed(1)}% de confianza`;
+  }
+ 
+  document.getElementById("imagen-entrada").addEventListener("change", (evento) => {
+    clasificarImagen(evento.target.files[0]);
+  });
+ 
+  cargarModelo();
+</script>
+
